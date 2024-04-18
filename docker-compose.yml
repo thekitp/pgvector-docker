@@ -1,0 +1,42 @@
+version: '3'
+services:
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=<=change-me=>ZHK8sF1tW72hxgrqk1gY/w==<=change-me=>
+    networks:
+      - database
+  pgvector-example:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    environment:
+      - PGPASSWORD=<=change-me=>ZHK8sF1tW72hxgrqk1gY/w==<=change-me=>
+    command:
+      - psql
+      - -h
+      - db
+      - -p
+      - "5432"
+      - -U
+      - postgres
+      - -d
+      - postgres
+      - -c
+      - >-
+        CREATE EXTENSION IF NOT EXISTS vector;
+        CREATE TABLE IF NOT EXISTS items (id bigserial PRIMARY KEY, embedding vector(3));
+        INSERT INTO items (embedding) VALUES ('[1,2,3]'), ('[4,5,6]');
+        SELECT * FROM items ORDER BY embedding <-> '[3,1,2]' LIMIT 5;
+    networks:
+      - database
+    profiles:
+      - example
+
+networks:
+  database:
+    external: false
